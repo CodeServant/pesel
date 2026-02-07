@@ -316,39 +316,44 @@ impl PESEL {
 }
 #[cfg(test)]
 mod pesel_parsing_tests {
-    use std::str::FromStr;
     use crate::pesel_parsing_error::PeselError;
+    use std::str::FromStr;
+
+    fn should_error(pesel: &str, err: PeselError, fail_msg: &str) {
+        let pesel = super::PESEL::from_str(pesel);
+        assert!(
+            pesel.is_err_and(|f| PeselError::new(err) == f),
+            "should fail with case: {}",
+            fail_msg
+        );
+    }
 
     #[test]
     fn zero_length_string_should_fail() {
-        let pesel = super::PESEL::from_str("");
-
-        assert_eq!(true, pesel.is_err());
-        assert_eq!(super::PeselError::new(PeselError::SizeError), pesel.err().unwrap());
+        should_error("", PeselError::SizeError, "zero length string");
     }
 
     #[test]
     fn pesel_may_only_contain_digits() {
-        let pesel = super::PESEL::from_str("4405140145a");
-
-        assert_eq!(true, pesel.is_err());
-        assert_eq!(PeselError::new(PeselError::BadFormat), pesel.unwrap_err());
+        should_error(
+            "4405140145a",
+            PeselError::BadFormat,
+            "pesel may only contains digits",
+        );
     }
 
     #[test]
-    fn input_longer_than_11_digits_should_fail() {
-        let pesel = super::PESEL::from_str("800526199869");
-
-        assert_eq!(true, pesel.is_err());
-        assert_eq!(super::PeselError::new(PeselError::SizeError), pesel.err().unwrap());
-    }
-
-    #[test]
-    fn input_shorter_than_11_digits_should_fail() {
-        let pesel = super::PESEL::from_str("8005261998");
-
-        assert_eq!(true, pesel.is_err());
-        assert_eq!(super::PeselError::new(PeselError::SizeError), pesel.err().unwrap());
+    fn length_input() {
+        should_error(
+            "800526199869",
+            PeselError::SizeError,
+            "input longer than 11 digits",
+        );
+        should_error(
+            "8005261998",
+            PeselError::SizeError,
+            "input shorter than 11 digits",
+        );
     }
 }
 
